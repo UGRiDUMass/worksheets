@@ -1,0 +1,74 @@
+
+# Stock Market Data
+
+This data contains percentage retuns for the S&P 500 stock index for 1,250 days from 2001 to 2005. For each date, percentage returns for 5 lags are recorded.( five previous days). There is also a volume variable which is the recorded number of shares traded on the previous days, in the billons. The Today varaibel is the percentage return on the date being "predicted for" and the Direction variable is wether the market is up or down. 
+
+```{r}
+library(ISLR)
+names(Smarket)
+dim(Smarket)
+summary(Smarket)
+pairs(Smarket)
+cor(Smarket[,-9])
+attach(Smarket)
+```
+
+```{r}
+ggplot(Smarket, aes(x= c(1:1250), y= Volume,colour = Direction)) + geom_point() + labs(x= "days", title = "Stock Market Trends") +theme(plot.title = element_text(hjust = 0.5)) + geom_vline(xintercept = 999, linetype == 4)
+
+```
+
+
+Lets apply Knn-nearest neighbors to classfy days as either up or down days. If our classfier does well we can use it to forecast. 
+
+We are going to attempt to classify days in which we already know the label for. This is called supervised learning. 2005 data will be used as a validation set. The knn algorithm will train on data from 2001-2004.  
+
+```{r}
+library(ISLR)
+attach(Smarket)
+train=(Year<2005)
+Smarket.2005=Smarket[!train,]
+dim(Smarket.2005)
+Direction.2005=Direction[!train]
+```
+
+```{r}
+# K-Nearest Neighbors
+
+library(class)
+train.X=cbind(Lag1,Lag2)[train,]
+test.X=cbind(Lag1,Lag2)[!train,]
+train.Direction=Direction[train]
+set.seed(1)
+knn.pred=knn(train.X,test.X,train.Direction,k=1)
+table(knn.pred,Direction.2005)
+(83+43)/252
+knn.pred=knn(train.X,test.X,train.Direction,k=3)
+table(knn.pred,Direction.2005)
+mean(knn.pred==Direction.2005)
+```
+
+
+```{r}
+library(ElemStatLearn)
+require(class)
+x <- mixture.example$x
+g <- mixture.example$y
+xnew <- mixture.example$xnew
+mod15 <- knn(x, xnew, g, k=10, prob=TRUE)
+prob <- attr(mod15, "prob")
+prob <- ifelse(mod15=="1", prob, 1-prob)
+px1 <- mixture.example$px1
+px2 <- mixture.example$px2
+prob15 <- matrix(prob, length(px1), length(px2))
+par(mar=rep(2,4))
+contour(px1, px2, prob15, levels=0.5, labels="", xlab="", ylab="", main=
+          "10-nearest neighbour", axes=FALSE)
+points(x, col=ifelse(g==1, "coral", "cornflowerblue"))
+gd <- expand.grid(x=px1, y=px2)
+points(gd, pch=".", cex=1.2, col=ifelse(prob15>0.5, "coral", "cornflowerblue"))
+box()
+``` 
+
+
+
